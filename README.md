@@ -1,6 +1,6 @@
 # WebRTC Chat
 
-This project provides a minimal WebRTC text and voice chat using React and Node.js. It can be run locally using Docker Compose.
+This project provides a simple chat interface styled with Tailwind CSS. It includes mock channels and messages plus a button to toggle voice status. The app runs locally using Node.js and Docker Compose.
 
 ## Structure
 
@@ -15,8 +15,8 @@ server/ - Express + WebSocket backend for chat and signaling
    ```bash
    docker-compose up --build
    ```
-2. Open `http://localhost:4000` in two browser windows.
-3. Use the text input to send messages. Press **Join Voice Channel** to enable microphone and talk.
+2. Open `http://localhost:4000` in your browser.
+3. Use the input at the bottom to send messages. The **Join Voice** button toggles a mock voice status indicator.
 
 The frontend connects to the backend WebSocket on port `4001`.
 
