@@ -1,53 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import MessageInput from './components/MessageInput.jsx';
 import VoiceButton from './components/VoiceButton.jsx';
 
 const initialMessages = {
-  General: [
-    { user: 'Alice', text: 'Hello everyone!', time: '10:00' },
-    { user: 'Bob', text: 'Hi Alice!', time: '10:01' },
-  ],
-  Random: [
-    { user: 'Carol', text: 'Random thoughts here.', time: '09:30' },
-  ],
+  General: [],
+  Random: [],
 };
 
 export default function App() {
   const [channel, setChannel] = useState('General');
   const [messages, setMessages] = useState(initialMessages);
+  const [socket, setSocket] = useState(null);
+  const [myId, setMyId] = useState(null);
+  const channelRef = useRef('General');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMessages((prev) => ({
-        ...prev,
-        [channel]: [
-          ...prev[channel],
-          {
-            user: 'Bot',
-            text: 'This is a scheduled message.',
-            time: new Date().toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          },
-        ],
-      }));
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [channel]);
+    const ws = new WebSocket('ws://localhost:4001');
+    ws.onmessage = (event) => {
+      let data = {};
+      try {
+        data = JSON.parse(event.data);
+      } catch (_) {
+        return;
+      }
+
+      if (data.type === 'id') {
+        setMyId(data.id);
+      } else if (data.type === 'chat') {
+        const user = data.from === myId ? 'Me' : `User${data.from}`;
+        setMessages((prev) => {
+          const ch = channelRef.current;
+          return {
+            ...prev,
+            [ch]: [
+              ...(prev[ch] || []),
+              {
+                user,
+                text: data.message,
+                time: new Date().toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              },
+            ],
+          };
+        });
+      }
+    };
+    setSocket(ws);
+    return () => ws.close();
+  }, []);
 
   const addMessage = (text) => {
-    setMessages((prev) => ({
-      ...prev,
-      [channel]: [...prev[channel], { user: 'Me', text, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }],
-    }));
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'chat', message: text }));
+    }
   };
 
   return (
     <div className="h-screen flex bg-gray-900 text-gray-200">
-      <Sidebar channels={Object.keys(messages)} current={channel} setCurrent={setChannel} />
+      <Sidebar
+        channels={Object.keys(messages)}
+        current={channel}
+        setCurrent={(ch) => {
+          channelRef.current = ch;
+          setChannel(ch);
+        }}
+      />
       <div className="flex-1 flex flex-col">
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <h1 className="text-xl font-semibold">{channel}</h1>
