@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import Channel from './channel';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -19,7 +20,7 @@ function App() {
           <li className="text-blue-400"># general</li>
           <li># random</li>
         </ul>
-        <button className="mt-6 bg-blue-600 px-4 py-2 rounded">Join Voice</button>
+        <Channel />
       </aside>
       <main className="flex-1 flex flex-col">
         <div className="flex-1 p-4 overflow-y-auto">
